@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - StartupFlow</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * { font-family: 'Inter', sans-serif; }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        .nav-link { transition: all 0.2s ease; }
+        .nav-link:hover { color: #10b981; }
+        .card-hover { transition: all 0.3s ease; }
+        .card-hover:hover { transform: translateY(-2px); box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1); }
+        .toggle-switch { transition: all 0.2s ease; }
+        .toggle-switch:checked { background-color: #10b981; }
+        .api-key { font-family: 'JetBrains Mono', monospace; letter-spacing: -0.5px; }
+        .reveal { opacity: 0; transform: translateY(20px); }
+        .reveal.active { opacity: 1; transform: translateY(0); transition: all 0.6s ease; }
+        .tab-button { transition: all 0.2s ease; }
+        .tab-button.active { background-color: #10b981; color: white; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-8">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 bg-gradient-to-br from-blue-600 to-emerald-500 rounded-lg flex items-center justify-center">
+                            <span class="text-white font-bold text-sm">SF</span>
+                        </div>
+                        <span class="text-xl font-bold text-slate-800">StartupFlow</span>
+                    </div>
+                    <div class="hidden md:flex space-x-6">
+                        <a href="index.html" class="nav-link text-slate-600 hover:text-slate-700 pb-4">Dashboard</a>
+                        <a href="users.html" class="nav-link text-slate-600 hover:text-slate-700 pb-4">Users</a>
+                        <a href="settings.html" class="nav-link text-slate-700 font-medium border-b-2 border-emerald-500 pb-4">Settings</a>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button class="p-2 text-slate-600 hover:text-slate-800 hover:bg-gray-100 rounded-lg transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5-5-5h5v-12"></path>
+                        </svg>
+                    </button>
+                    <div class="w-8 h-8 bg-gray-300 rounded-full overflow-hidden">
+                        <img src="resources/user-avatars/user-1.jpg" alt="User" class="w-full h-full object-cover">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Header -->
+        <div class="mb-8 reveal">
+            <h1 class="text-3xl font-bold text-slate-800">Settings</h1>
+            <p class="text-slate-600 mt-2">Manage your account preferences and system configuration</p>
+        </div>
+
+        <!-- Settings Navigation Tabs -->
+        <div class="mb-8 reveal">
+            <div class="border-b border-gray-200">
+                <nav class="-mb-px flex space-x-8">
+                    <button class="tab-button active py-2 px-1 border-b-2 border-emerald-500 font-medium text-sm" data-tab="profile">
+                        Profile
+                    </button>
+                    <button class="tab-button py-2 px-1 border-b-2 border-transparent font-medium text-sm text-slate-500 hover:text-slate-700" data-tab="notifications">
+                        Notifications
+                    </button>
+                    <button class="tab-button py-2 px-1 border-b-2 border-transparent font-medium text-sm text-slate-500 hover:text-slate-700" data-tab="security">
+                        Security
+                    </button>
+                    <button class="tab-button py-2 px-1 border-b-2 border-transparent font-medium text-sm text-slate-500 hover:text-slate-700" data-tab="api">
+                        API Keys
+                    </button>
+                    <button class="tab-button py-2 px-1 border-b-2 border-transparent font-medium text-sm text-slate-500 hover:text-slate-700" data-tab="billing">
+                        Billing
+                    </button>
+                </nav>
+            </div>
+        </div>
+
+        <!-- Profile Settings -->
+        <div id="profile" class="tab-content active reveal">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
+                <h3 class="text-lg font-semibold text-slate-800 mb-6">Profile Information</h3>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div>
+                        <form class="space-y-4">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 mb-2">First Name</label>
+                                    <input type="text" value="Sarah" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 mb-2">Last Name</label>
+                                    <input type="text" value="Johnson" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">Email</label>
+                                <input type="email" value="sarah.johnson@startupflow.com" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">Job Title</label>
+                                <input type="text" value="Product Manager" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">Department</label>
+                                <select class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+                                    <option>Product</option>
+                                    <option>Engineering</option>
+                                    <option>Marketing</option>
+                                    <option>Sales</option>
+                                    <option>Operations</option>
+                                </select>
+                            </div>
+                            <div class="pt-4">
+                                <button type="submit" class="px-6 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors">
+                                    Save Changes
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                    <div>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-2">Profile Picture</label>
+                                <div class="flex items-center space-x-4">
+                                    <img src="resources/user-avatars/user-1.jpg" alt="Profile" class="w-16 h-16 rounded-full object-cover">
+                                    <div>
+                                        <button class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm">
+                                            Change Photo
+                                        </button>
+                                        <p class="text-xs text-slate-500 mt-1">JPG, PNG up to 5MB</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="bg-gray-50 rounded-lg p-4">
+                                <h4 class="font-medium text-slate-800 mb-2">Account Information</h4>
+                                <div class="space-y-2 text-sm text-slate-600">
+                                    <div class="flex justify-between">
+                                        <span>Member since:</span>
+                                        <span>January 15, 2024</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span>Last login:</span>
+                                        <span>2 hours ago</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span>Account status:</span>
+                                        <span class="text-emerald-600 font-medium">Active</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notifications Settings -->
+        <div id="notifications" class="tab-content reveal">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
+                <h3 class="text-lg font-semibold text-slate-800 mb-6">Notification Preferences</h3>
+                <div class="space-y-6">
+                    <div class="flex items-center justify-between py-4 border-b border-gray-200">
+                        <div>
+                            <h4 class="font-medium text-slate-800">Email Notifications</h4>
+                            <p class="text-sm text-slate-600">Receive updates via email</p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" class="sr-only peer" checked>
+                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-emerald-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+                        </label>
+                    </div>
+
+                    <div class="flex items-center justify-between py-4 border-b border-gray-200">
+                        <div>
+                            <h4 class="font-medium text-slate-800">Push Notifications</h4>
+                            <p class="text-sm text-slate-600">Browser and mobile push notifications</p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" class="sr-only peer" checked>
+                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-emerald-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+                        </label>
+                    </div>
+
+                    <div class="flex items-center justify-between py-4 border-b border-gray-200">
+                        <div>
+                            <h4 class="font-medium text-slate-800">Weekly Reports</h4>
+                            <p class="text-sm text-slate-600">Get weekly analytics summary</p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" class="sr-only peer">
+                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-emerald-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+                        </label>
+                    </div>
+
+                    <div class="flex items-center justify-between py-4 border-b border-gray-200">
+                        <div>
+                            <h4 class="font-medium text-slate-800">User Activity Alerts</h4>
+                            <p class="text-sm text-slate-600">Get notified about important user actions</p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" class="sr-only peer" checked>
+                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-emerald-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+                        </label>
+                    </div>
+
+                    <div class="flex items-center justify-between py-4">
+                        <div>
+                            <h4 class="font-medium text-slate-800">Marketing Updates</h4>
+                            <p class="text-sm text-slate-600">Product updates and feature announcements</p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" class="sr-only peer">
+                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-emerald-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Security Settings -->
+        <div id="security" class="tab-content reveal">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
+                <h3 class="text-lg font-semibold text-slate-800 mb-6">Security Settings</h3>
+                <div class="space-y-6">
+                    <div class="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                        <div class="flex items-start">
+                            <svg class="w-5 h-5 text-amber-600 mt-0.5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                            </svg>
+                            <div>
+                                <h4 class="font-medium text-amber-800">Security Recommendation</h4>
+                                <p class="text-sm text-amber-700 mt-1">Enable two-factor authentication to add an extra layer of security to your account.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between py-4 border-b border-gray-200">
+                        <div>
+                            <h4 class="font-medium text-slate-800">Two-Factor Authentication</h4>
+                            <p class="text-sm text-slate-600">Add an extra layer of security</p>
+                        </div>
+                        <button class="px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors text-sm">
+                            Enable 2FA
+                        </button>
+                    </div>
+
+                    <div class="flex items-center justify-between py-4 border-b border-gray-200">
+                        <div>
+                            <h4 class="font-medium text-slate-800">Login Notifications</h4>
+                            <p class="text-sm text-slate-600">Get notified of new login attempts</p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" class="sr-only peer" checked>
+                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-emerald-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+                        </label>
+                    </div>
+
+                    <div class="flex items-center justify-between py-4 border-b border-gray-200">
+                        <div>
+                            <h4 class="font-medium text-slate-800">Session Timeout</h4>
+                            <p class="text-sm text-slate-600">Auto-logout after inactivity</p>
+                        </div>
+                        <select class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-sm">
+                            <option>30 minutes</option>
+                            <option>1 hour</option>
+                            <option>2 hours</option>
+                            <option>4 hours</option>
+                            <option>Never</option>
+                        </select>
+                    </div>
+
+                    <div class="pt-4">
+                        <button class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors text-sm">
+                            Change Password
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- API Keys Settings -->
+        <div id="api" class="tab-content reveal">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-lg font-semibold text-slate-800">API Keys</h3>
+                    <button id="generateApiKey" class="px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors text-sm">
+                        Generate New Key
+                    </button>
+                </div>
+                
+                <div class="space-y-4" id="apiKeysList">
+                    <div class="border border-gray-200 rounded-lg p-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="flex items-center space-x-3">
+                                <span class="font-medium text-slate-800">Production Key</span>
+                                <span class="px-2 py-1 bg-green-100 text-green-700 text-xs rounded-full">Active</span>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <button class="text-blue-600 hover:text-blue-800 text-sm">Copy</button>
+                                <button class="text-red-600 hover:text-red-800 text-sm">Revoke</button>
+                            </div>
+                        </div>
+                        <div class="api-key text-sm text-slate-600 bg-gray-50 p-2 rounded border font-mono">
+                            sk_live_4f6a8b2c9d1e3f7g8h0i2j4k6l8m9n0p
+                        </div>
+                        <div class="text-xs text-slate-500 mt-2">
+                            Created on March 15, 2024 • Last used 2 hours ago
+                        </div>
+                    </div>
+
+                    <div class="border border-gray-200 rounded-lg p-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="flex items-center space-x-3">
+                                <span class="font-medium text-slate-800">Testing Key</span>
+                                <span class="px-2 py-1 bg-amber-100 text-amber-700 text-xs rounded-full">Limited</span>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <button class="text-blue-600 hover:text-blue-800 text-sm">Copy</button>
+                                <button class="text-red-600 hover:text-red-800 text-sm">Revoke</button>
+                            </div>
+                        </div>
+                        <div class="api-key text-sm text-slate-600 bg-gray-50 p-2 rounded border font-mono">
+                            sk_test_1a3b5c7d9e2f4g6h8j0k2l4m6n8o9p0q
+                        </div>
+                        <div class="text-xs text-slate-500 mt-2">
+                            Created on February 28, 2024 • Last used 1 day ago
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <h4 class="font-medium text-blue-800 mb-2">API Usage</h4>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
+                        <div>
+                            <span class="text-blue-600">Requests Today:</span>
+                            <span class="font-medium">1,247</span>
+                        </div>
+                        <div>
+                            <span class="text-blue-600">Rate Limit:</span>
+                            <span class="font-medium">10,000/hour</span>
+                        </div>
+                        <div>
+                            <span class="text-blue-600">Quota Reset:</span>
+                            <span class="font-medium">23:59:00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Billing Settings -->
+        <div id="billing" class="tab-content reveal">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
+                <h3 class="text-lg font-semibold text-slate-800 mb-6">Billing & Subscription</h3>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div>
+                        <h4 class="font-medium text-slate-800 mb-4">Current Plan</h4>
+                        <div class="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="font-semibold text-emerald-800">Pro Plan</span>
+                                <span class="px-2 py-1 bg-emerald-100 text-emerald-700 text-xs rounded-full">Active</span>
+                            </div>
+                            <div class="text-2xl font-bold text-emerald-800 mb-2">$99/month</div>
+                            <div class="text-sm text-emerald-700 mb-4">2,847 active users • 85% of plan limit</div>
+                            <button class="w-full px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors text-sm">
+                                Upgrade Plan
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h4 class="font-medium text-slate-800 mb-4">Billing Information</h4>
+                        <div class="space-y-3 text-sm">
+                            <div class="flex justify-between">
+                                <span class="text-slate-600">Next billing date:</span>
+                                <span class="font-medium">April 15, 2025</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-slate-600">Payment method:</span>
+                                <span class="font-medium">•••• •••• •••• 4242</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-slate-600">Auto-renewal:</span>
+                                <span class="font-medium text-emerald-600">Enabled</span>
+                            </div>
+                        </div>
+                        <div class="mt-4 space-y-2">
+                            <button class="w-full px-4 py-2 border border-gray-300 text-slate-700 rounded-lg hover:bg-gray-50 transition-colors text-sm">
+                                Update Payment Method
+                            </button>
+                            <button class="w-full px-4 py-2 border border-gray-300 text-slate-700 rounded-lg hover:bg-gray-50 transition-colors text-sm">
+                                Download Invoice
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-gray-200 mt-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div class="text-center">
+                <p class="text-slate-600">&copy; 2025 StartupFlow. All rights reserved. Built with modern web technologies.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="main.js"></script>
+    <script>
+        // Settings Manager
+        class SettingsManager {
+            constructor() {
+                this.currentTab = 'profile';
+                this.apiKeys = [
+                    {
+                        name: 'Production Key',
+                        key: 'sk_live_4f6a8b2c9d1e3f7g8h0i2j4k6l8m9n0p',
+                        status: 'active',
+                        created: '2024-03-15',
+                        lastUsed: '2 hours ago'
+                    },
+                    {
+                        name: 'Testing Key',
+                        key: 'sk_test_1a3b5c7d9e2f4g6h8j0k2l4m6n8o9p0q',
+                        status: 'limited',
+                        created: '2024-02-28',
+                        lastUsed: '1 day ago'
+                    }
+                ];
+                this.init();
+            }
+
+            init() {
+                this.initEventListeners();
+                this.initRevealAnimations();
+                this.renderApiKeys();
+            }
+
+            initEventListeners() {
+                // Tab switching
+                document.querySelectorAll('.tab-button').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        const tabName = e.target.dataset.tab;
+                        this.switchTab(tabName);
+                    });
+                });
+
+                // API Key generation
+                document.getElementById('generateApiKey').addEventListener('click', () => {
+                    this.generateApiKey();
+                });
+
+                // Form submissions
+                document.querySelectorAll('form').forEach(form => {
+                    form.addEventListener('submit', (e) => {
+                        e.preventDefault();
+                        this.handleFormSubmit(form);
+                    });
+                });
+            }
+
+            switchTab(tabName) {
+                // Update tab buttons
+                document.querySelectorAll('.tab-button').forEach(btn => {
+                    btn.classList.remove('active');
+                    btn.classList.add('text-slate-500', 'hover:text-slate-700');
+                    btn.classList.remove('border-emerald-500');
+                    btn.classList.add('border-transparent');
+                });
+
+                const activeBtn = document.querySelector(`[data-tab="${tabName}"]`);
+                activeBtn.classList.add('active');
+                activeBtn.classList.remove('text-slate-500', 'hover:text-slate-700');
+                activeBtn.classList.add('border-emerald-500');
+                activeBtn.classList.remove('border-transparent');
+
+                // Update tab content
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.remove('active');
+                });
+
+                document.getElementById(tabName).classList.add('active');
+                
+                this.currentTab = tabName;
+            }
+
+            generateApiKey() {
+                const keyName = prompt('Enter a name for the API key:');
+                if (!keyName) return;
+
+                const newKey = {
+                    name: keyName,
+                    key: 'sk_' + Math.random().toString(36).substr(2, 32),
+                    status: 'active',
+                    created: new Date().toISOString().split('T')[0],
+                    lastUsed: 'Never'
+                };
+
+                this.apiKeys.push(newKey);
+                this.renderApiKeys();
+                window.DashboardUtils.showNotification('API key generated successfully', 'success');
+            }
+
+            renderApiKeys() {
+                const container = document.getElementById('apiKeysList');
+                container.innerHTML = '';
+
+                this.apiKeys.forEach((apiKey, index) => {
+                    const keyDiv = document.createElement('div');
+                    keyDiv.className = 'border border-gray-200 rounded-lg p-4';
+                    
+                    const statusClass = apiKey.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700';
+                    
+                    keyDiv.innerHTML = `
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="flex items-center space-x-3">
+                                <span class="font-medium text-slate-800">${apiKey.name}</span>
+                                <span class="px-2 py-1 ${statusClass} text-xs rounded-full">
+                                    ${apiKey.status.charAt(0).toUpperCase() + apiKey.status.slice(1)}
+                                </span>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <button onclick="settingsManager.copyApiKey('${apiKey.key}')" class="text-blue-600 hover:text-blue-800 text-sm">Copy</button>
+                                <button onclick="settingsManager.revokeApiKey(${index})" class="text-red-600 hover:text-red-800 text-sm">Revoke</button>
+                            </div>
+                        </div>
+                        <div class="api-key text-sm text-slate-600 bg-gray-50 p-2 rounded border font-mono">
+                            ${apiKey.key}
+                        </div>
+                        <div class="text-xs text-slate-500 mt-2">
+                            Created on ${apiKey.created} • Last used ${apiKey.lastUsed}
+                        </div>
+                    `;
+                    
+                    container.appendChild(keyDiv);
+                });
+            }
+
+            copyApiKey(key) {
+                navigator.clipboard.writeText(key).then(() => {
+                    window.DashboardUtils.showNotification('API key copied to clipboard', 'success');
+                });
+            }
+
+            revokeApiKey(index) {
+                if (confirm('Are you sure you want to revoke this API key?')) {
+                    this.apiKeys.splice(index, 1);
+                    this.renderApiKeys();
+                    window.DashboardUtils.showNotification('API key revoked successfully', 'success');
+                }
+            }
+
+            handleFormSubmit(form) {
+                // Simulate form submission
+                const formData = new FormData(form);
+                
+                // Show loading state
+                const submitBtn = form.querySelector('button[type="submit"]');
+                const originalText = submitBtn.textContent;
+                submitBtn.textContent = 'Saving...';
+                submitBtn.disabled = true;
+                
+                setTimeout(() => {
+                    submitBtn.textContent = originalText;
+                    submitBtn.disabled = false;
+                    window.DashboardUtils.showNotification('Settings saved successfully', 'success');
+                }, 1000);
+            }
+
+            initRevealAnimations() {
+                const revealElements = document.querySelectorAll('.reveal');
+                
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            entry.target.classList.add('active');
+                        }
+                    });
+                }, { threshold: 0.1 });
+                
+                revealElements.forEach(el => observer.observe(el));
+            }
+        }
+
+        // Initialize settings manager
+        const settingsManager = new SettingsManager();
+    </script>
+</body>
+</html>

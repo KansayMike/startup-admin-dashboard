@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Management - StartupFlow</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.4.3/echarts.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * { font-family: 'Inter', sans-serif; }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        .nav-link { transition: all 0.2s ease; }
+        .nav-link:hover { color: #10b981; }
+        .card-hover { transition: all 0.3s ease; }
+        .card-hover:hover { transform: translateY(-2px); box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1); }
+        .user-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
+        .status-badge { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 500; }
+        .status-active { background-color: #d1fae5; color: #065f46; }
+        .status-inactive { background-color: #fee2e2; color: #991b1b; }
+        .status-pending { background-color: #fef3c7; color: #92400e; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); z-index: 1000; }
+        .modal.active { display: flex; align-items: center; justify-content: center; }
+        .modal-content { background: white; border-radius: 12px; max-width: 500px; width: 90%; max-height: 90vh; overflow-y: auto; }
+        .table-row { transition: all 0.2s ease; }
+        .table-row:hover { background-color: #f8fafc; }
+        .sortable { cursor: pointer; user-select: none; }
+        .sortable:hover { color: #10b981; }
+        .reveal { opacity: 0; transform: translateY(20px); }
+        .reveal.active { opacity: 1; transform: translateY(0); transition: all 0.6s ease; }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-8">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 bg-gradient-to-br from-blue-600 to-emerald-500 rounded-lg flex items-center justify-center">
+                            <span class="text-white font-bold text-sm">SF</span>
+                        </div>
+                        <span class="text-xl font-bold text-slate-800">StartupFlow</span>
+                    </div>
+                    <div class="hidden md:flex space-x-6">
+                        <a href="index.html" class="nav-link text-slate-600 hover:text-slate-700 pb-4">Dashboard</a>
+                        <a href="users.html" class="nav-link text-slate-700 font-medium border-b-2 border-emerald-500 pb-4">Users</a>
+                        <a href="settings.html" class="nav-link text-slate-600 hover:text-slate-700 pb-4">Settings</a>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button class="p-2 text-slate-600 hover:text-slate-800 hover:bg-gray-100 rounded-lg transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5-5-5h5v-12"></path>
+                        </svg>
+                    </button>
+                    <div class="w-8 h-8 bg-gray-300 rounded-full overflow-hidden">
+                        <img src="resources/user-avatars/user-1.jpg" alt="User" class="w-full h-full object-cover">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Header -->
+        <div class="mb-8 reveal">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
+                <div>
+                    <h1 class="text-3xl font-bold text-slate-800">User Management</h1>
+                    <p class="text-slate-600 mt-2">Manage your team members and their permissions</p>
+                </div>
+                <button id="addUserBtn" class="px-6 py-3 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors flex items-center space-x-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                    </svg>
+                    <span>Add New User</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 card-hover reveal">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-slate-600 text-sm font-medium">Total Users</p>
+                        <p class="text-2xl font-bold text-slate-800 mono" id="totalUsers">2,847</p>
+                    </div>
+                    <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 card-hover reveal">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-slate-600 text-sm font-medium">Active Users</p>
+                        <p class="text-2xl font-bold text-slate-800 mono" id="activeUsers">2,654</p>
+                    </div>
+                    <div class="w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 card-hover reveal">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-slate-600 text-sm font-medium">New This Month</p>
+                        <p class="text-2xl font-bold text-slate-800 mono" id="newUsers">193</p>
+                    </div>
+                    <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 card-hover reveal">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-slate-600 text-sm font-medium">Pending Invites</p>
+                        <p class="text-2xl font-bold text-slate-800 mono" id="pendingInvites">12</p>
+                    </div>
+                    <div class="w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filters and Search -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8 reveal">
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
+                <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4">
+                    <div class="relative">
+                        <input type="text" id="searchInput" placeholder="Search users..." class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 w-full sm:w-64">
+                        <svg class="w-5 h-5 text-gray-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                    </div>
+                    <select id="statusFilter" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+                        <option value="">All Status</option>
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                        <option value="pending">Pending</option>
+                    </select>
+                    <select id="roleFilter" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+                        <option value="">All Roles</option>
+                        <option value="admin">Admin</option>
+                        <option value="user">User</option>
+                        <option value="viewer">Viewer</option>
+                    </select>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <button id="bulkActions" class="px-4 py-2 text-slate-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                        Bulk Actions
+                    </button>
+                    <button id="exportUsers" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">
+                        Export
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Users Table -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden reveal">
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-50 border-b border-gray-200">
+                        <tr>
+                            <th class="px-6 py-4 text-left">
+                                <input type="checkbox" id="selectAll" class="rounded border-gray-300 text-emerald-500 focus:ring-emerald-500">
+                            </th>
+                            <th class="px-6 py-4 text-left text-sm font-medium text-slate-700 sortable" data-sort="name">
+                                User
+                                <svg class="w-4 h-4 inline ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
+                                </svg>
+                            </th>
+                            <th class="px-6 py-4 text-left text-sm font-medium text-slate-700 sortable" data-sort="email">
+                                Email
+                                <svg class="w-4 h-4 inline ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
+                                </svg>
+                            </th>
+                            <th class="px-6 py-4 text-left text-sm font-medium text-slate-700">Role</th>
+                            <th class="px-6 py-4 text-left text-sm font-medium text-slate-700">Status</th>
+                            <th class="px-6 py-4 text-left text-sm font-medium text-slate-700 sortable" data-sort="date">
+                                Joined
+                                <svg class="w-4 h-4 inline ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
+                                </svg>
+                            </th>
+                            <th class="px-6 py-4 text-left text-sm font-medium text-slate-700">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersTableBody" class="divide-y divide-gray-200">
+                        <!-- Users will be populated by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            <div class="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+                <div class="text-sm text-slate-600">
+                    Showing <span id="showingStart">1</span> to <span id="showingEnd">10</span> of <span id="totalCount">15</span> users
+                </div>
+                <div class="flex items-center space-x-2">
+                    <button id="prevPage" class="px-3 py-1 text-slate-600 border border-gray-300 rounded hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                        Previous
+                    </button>
+                    <span id="currentPage" class="px-3 py-1 bg-emerald-500 text-white rounded">1</span>
+                    <button id="nextPage" class="px-3 py-1 text-slate-600 border border-gray-300 rounded hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                        Next
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit User Modal -->
+    <div id="userModal" class="modal">
+        <div class="modal-content">
+            <div class="p-6 border-b border-gray-200">
+                <div class="flex items-center justify-between">
+                    <h3 id="modalTitle" class="text-lg font-semibold text-slate-800">Add New User</h3>
+                    <button id="closeModal" class="text-slate-400 hover:text-slate-600">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <form id="userForm" class="p-6 space-y-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-2">First Name</label>
+                        <input type="text" id="firstName" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-2">Last Name</label>
+                        <input type="text" id="lastName" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-2">Email</label>
+                    <input type="email" id="email" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-2">Role</label>
+                    <select id="role" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+                        <option value="">Select Role</option>
+                        <option value="admin">Admin</option>
+                        <option value="user">User</option>
+                        <option value="viewer">Viewer</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-2">Status</label>
+                    <select id="status" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                        <option value="pending">Pending</option>
+                    </select>
+                </div>
+                <div class="flex justify-end space-x-3 pt-4">
+                    <button type="button" id="cancelBtn" class="px-4 py-2 text-slate-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                        Cancel
+                    </button>
+                    <button type="submit" class="px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors">
+                        Save User
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteModal" class="modal">
+        <div class="modal-content max-w-md">
+            <div class="p-6">
+                <div class="flex items-center justify-center w-12 h-12 bg-red-100 rounded-full mx-auto mb-4">
+                    <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                    </svg>
+                </div>
+                <h3 class="text-lg font-semibold text-slate-800 text-center mb-2">Delete User</h3>
+                <p class="text-slate-600 text-center mb-6">Are you sure you want to delete this user? This action cannot be undone.</p>
+                <div class="flex justify-center space-x-3">
+                    <button id="cancelDelete" class="px-4 py-2 text-slate-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                        Cancel
+                    </button>
+                    <button id="confirmDelete" class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors">
+                        Delete
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-gray-200 mt-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div class="text-center">
+                <p class="text-slate-600">&copy; 2025 StartupFlow. All rights reserved. Built with modern web technologies.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="main.js"></script>
+    <script>
+        // User Management System
+        class UserManager {
+            constructor() {
+                this.users = this.generateMockUsers();
+                this.currentPage = 1;
+                this.itemsPerPage = 10;
+                this.sortField = 'date';
+                this.sortDirection = 'desc';
+                this.filters = { search: '', status: '', role: '' };
+                this.editingUserId = null;
+                this.userToDelete = null;
+                this.init();
+            }
+
+            init() {
+                this.initEventListeners();
+                this.renderUsers();
+                this.updateStats();
+                this.initRevealAnimations();
+            }
+
+            generateMockUsers() {
+                const firstNames = ['Alex', 'Sarah', 'Mike', 'Emma', 'John', 'Lisa', 'David', 'Anna', 'Chris', 'Maria', 'James', 'Sophie', 'Robert', 'Emily', 'Daniel'];
+                const lastNames = ['Chen', 'Johnson', 'Wilson', 'Davis', 'Brown', 'Miller', 'Garcia', 'Martinez', 'Anderson', 'Taylor', 'Thomas', 'Jackson', 'White', 'Harris', 'Martin'];
+                const roles = ['admin', 'user', 'viewer'];
+                const statuses = ['active', 'inactive', 'pending'];
+                const domains = ['company.com', 'startup.io', 'tech.co', 'business.org'];
+                
+                const users = [];
+                
+                for (let i = 1; i <= 15; i++) {
+                    const firstName = firstNames[i % firstNames.length];
+                    const lastName = lastNames[i % lastNames.length];
+                    const role = roles[Math.floor(Math.random() * roles.length)];
+                    const status = statuses[Math.floor(Math.random() * statuses.length)];
+                    const domain = domains[Math.floor(Math.random() * domains.length)];
+                    
+                    users.push({
+                        id: i,
+                        firstName: firstName,
+                        lastName: lastName,
+                        email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}@${domain}`,
+                        role: role,
+                        status: status,
+                        joinDate: new Date(2024, Math.floor(Math.random() * 12), Math.floor(Math.random() * 28) + 1),
+                        avatar: `resources/user-avatars/user-${i}.jpg`,
+                        lastLogin: new Date(2025, Math.floor(Math.random() * 6), Math.floor(Math.random() * 28) + 1)
+                    });
+                }
+                
+                return users;
+            }
+
+            initEventListeners() {
+                // Add user button
+                document.getElementById('addUserBtn').addEventListener('click', () => {
+                    this.openAddUserModal();
+                });
+
+                // Modal controls
+                document.getElementById('closeModal').addEventListener('click', () => {
+                    this.closeModal();
+                });
+
+                document.getElementById('cancelBtn').addEventListener('click', () => {
+                    this.closeModal();
+                });
+
+                // Form submission
+                document.getElementById('userForm').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.saveUser();
+                });
+
+                // Search and filters
+                document.getElementById('searchInput').addEventListener('input', (e) => {
+                    this.filters.search = e.target.value.toLowerCase();
+                    this.currentPage = 1;
+                    this.renderUsers();
+                });
+
+                document.getElementById('statusFilter').addEventListener('change', (e) => {
+                    this.filters.status = e.target.value;
+                    this.currentPage = 1;
+                    this.renderUsers();
+                });
+
+                document.getElementById('roleFilter').addEventListener('change', (e) => {
+                    this.filters.role = e.target.value;
+                    this.currentPage = 1;
+                    this.renderUsers();
+                });
+
+                // Pagination
+                document.getElementById('prevPage').addEventListener('click', () => {
+                    if (this.currentPage > 1) {
+                        this.currentPage--;
+                        this.renderUsers();
+                    }
+                });
+
+                document.getElementById('nextPage').addEventListener('click', () => {
+                    const totalPages = Math.ceil(this.getFilteredUsers().length / this.itemsPerPage);
+                    if (this.currentPage < totalPages) {
+                        this.currentPage++;
+                        this.renderUsers();
+                    }
+                });
+
+                // Select all checkbox
+                document.getElementById('selectAll').addEventListener('change', (e) => {
+                    const checkboxes = document.querySelectorAll('.user-checkbox');
+                    checkboxes.forEach(cb => cb.checked = e.target.checked);
+                });
+
+                // Delete modal
+                document.getElementById('cancelDelete').addEventListener('click', () => {
+                    this.closeDeleteModal();
+                });
+
+                document.getElementById('confirmDelete').addEventListener('click', () => {
+                    this.deleteUser();
+                });
+
+                // Sorting
+                document.querySelectorAll('.sortable').forEach(header => {
+                    header.addEventListener('click', () => {
+                        const field = header.dataset.sort;
+                        this.sortUsers(field);
+                    });
+                });
+            }
+
+            getFilteredUsers() {
+                return this.users.filter(user => {
+                    const matchesSearch = !this.filters.search || 
+                        user.firstName.toLowerCase().includes(this.filters.search) ||
+                        user.lastName.toLowerCase().includes(this.filters.search) ||
+                        user.email.toLowerCase().includes(this.filters.search);
+                    
+                    const matchesStatus = !this.filters.status || user.status === this.filters.status;
+                    const matchesRole = !this.filters.role || user.role === this.filters.role;
+                    
+                    return matchesSearch && matchesStatus && matchesRole;
+                });
+            }
+
+            sortUsers(field) {
+                if (this.sortField === field) {
+                    this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+                } else {
+                    this.sortField = field;
+                    this.sortDirection = 'asc';
+                }
+
+                this.users.sort((a, b) => {
+                    let aVal, bVal;
+                    
+                    switch (field) {
+                        case 'name':
+                            aVal = a.firstName + ' ' + a.lastName;
+                            bVal = b.firstName + ' ' + b.lastName;
+                            break;
+                        case 'email':
+                            aVal = a.email;
+                            bVal = b.email;
+                            break;
+                        case 'date':
+                            aVal = a.joinDate;
+                            bVal = b.joinDate;
+                            break;
+                        default:
+                            return 0;
+                    }
+                    
+                    if (this.sortDirection === 'asc') {
+                        return aVal > bVal ? 1 : -1;
+                    } else {
+                        return aVal < bVal ? 1 : -1;
+                    }
+                });
+
+                this.renderUsers();
+            }
+
+            renderUsers() {
+                const filteredUsers = this.getFilteredUsers();
+                const startIndex = (this.currentPage - 1) * this.itemsPerPage;
+                const endIndex = startIndex + this.itemsPerPage;
+                const usersToShow = filteredUsers.slice(startIndex, endIndex);
+                
+                const tbody = document.getElementById('usersTableBody');
+                tbody.innerHTML = '';
+                
+                usersToShow.forEach(user => {
+                    const row = document.createElement('tr');
+                    row.className = 'table-row';
+                    row.innerHTML = `
+                        <td class="px-6 py-4">
+                            <input type="checkbox" class="user-checkbox rounded border-gray-300 text-emerald-500 focus:ring-emerald-500" value="${user.id}">
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="flex items-center space-x-3">
+                                <img src="${user.avatar}" alt="${user.firstName} ${user.lastName}" class="user-avatar">
+                                <div>
+                                    <div class="font-medium text-slate-800">${user.firstName} ${user.lastName}</div>
+                                    <div class="text-sm text-slate-500">Last login: ${user.lastLogin.toLocaleDateString()}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-slate-600">${user.email}</td>
+                        <td class="px-6 py-4">
+                            <span class="px-2 py-1 text-xs font-medium rounded-full ${this.getRoleBadgeClass(user.role)}">
+                                ${user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4">
+                            <span class="status-badge status-${user.status}">
+                                ${user.status.charAt(0).toUpperCase() + user.status.slice(1)}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-slate-600">${user.joinDate.toLocaleDateString()}</td>
+                        <td class="px-6 py-4">
+                            <div class="flex items-center space-x-2">
+                                <button onclick="userManager.editUser(${user.id})" class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                                    Edit
+                                </button>
+                                <button onclick="userManager.confirmDeleteUser(${user.id})" class="text-red-600 hover:text-red-800 text-sm font-medium">
+                                    Delete
+                                </button>
+                            </div>
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+                
+                this.updatePagination(filteredUsers.length);
+                this.updateStats();
+            }
+
+            getRoleBadgeClass(role) {
+                switch (role) {
+                    case 'admin': return 'bg-red-100 text-red-700';
+                    case 'user': return 'bg-blue-100 text-blue-700';
+                    case 'viewer': return 'bg-gray-100 text-gray-700';
+                    default: return 'bg-gray-100 text-gray-700';
+                }
+            }
+
+            updatePagination(totalItems) {
+                const totalPages = Math.ceil(totalItems / this.itemsPerPage);
+                const startIndex = (this.currentPage - 1) * this.itemsPerPage + 1;
+                const endIndex = Math.min(this.currentPage * this.itemsPerPage, totalItems);
+                
+                document.getElementById('showingStart').textContent = totalItems > 0 ? startIndex : 0;
+                document.getElementById('showingEnd').textContent = endIndex;
+                document.getElementById('totalCount').textContent = totalItems;
+                document.getElementById('currentPage').textContent = this.currentPage;
+                
+                document.getElementById('prevPage').disabled = this.currentPage === 1;
+                document.getElementById('nextPage').disabled = this.currentPage === totalPages || totalItems === 0;
+            }
+
+            updateStats() {
+                const filteredUsers = this.getFilteredUsers();
+                
+                document.getElementById('totalUsers').textContent = filteredUsers.length;
+                document.getElementById('activeUsers').textContent = filteredUsers.filter(u => u.status === 'active').length;
+                document.getElementById('newUsers').textContent = filteredUsers.filter(u => u.joinDate.getMonth() === new Date().getMonth()).length;
+                document.getElementById('pendingInvites').textContent = filteredUsers.filter(u => u.status === 'pending').length;
+            }
+
+            openAddUserModal() {
+                this.editingUserId = null;
+                document.getElementById('modalTitle').textContent = 'Add New User';
+                document.getElementById('userForm').reset();
+                document.getElementById('userModal').classList.add('active');
+            }
+
+            editUser(userId) {
+                const user = this.users.find(u => u.id === userId);
+                if (!user) return;
+                
+                this.editingUserId = userId;
+                document.getElementById('modalTitle').textContent = 'Edit User';
+                document.getElementById('firstName').value = user.firstName;
+                document.getElementById('lastName').value = user.lastName;
+                document.getElementById('email').value = user.email;
+                document.getElementById('role').value = user.role;
+                document.getElementById('status').value = user.status;
+                document.getElementById('userModal').classList.add('active');
+            }
+
+            closeModal() {
+                document.getElementById('userModal').classList.remove('active');
+                this.editingUserId = null;
+            }
+
+            saveUser() {
+                const formData = {
+                    firstName: document.getElementById('firstName').value,
+                    lastName: document.getElementById('lastName').value,
+                    email: document.getElementById('email').value,
+                    role: document.getElementById('role').value,
+                    status: document.getElementById('status').value
+                };
+                
+                if (this.editingUserId) {
+                    // Edit existing user
+                    const userIndex = this.users.findIndex(u => u.id === this.editingUserId);
+                    if (userIndex !== -1) {
+                        this.users[userIndex] = { ...this.users[userIndex], ...formData };
+                        window.DashboardUtils.showNotification('User updated successfully', 'success');
+                    }
+                } else {
+                    // Add new user
+                    const newUser = {
+                        id: Math.max(...this.users.map(u => u.id)) + 1,
+                        ...formData,
+                        joinDate: new Date(),
+                        lastLogin: new Date(),
+                        avatar: `resources/user-avatars/user-${Math.floor(Math.random() * 15) + 1}.jpg`
+                    };
+                    this.users.push(newUser);
+                    window.DashboardUtils.showNotification('User added successfully', 'success');
+                }
+                
+                this.closeModal();
+                this.renderUsers();
+            }
+
+            confirmDeleteUser(userId) {
+                this.userToDelete = userId;
+                document.getElementById('deleteModal').classList.add('active');
+            }
+
+            closeDeleteModal() {
+                document.getElementById('deleteModal').classList.remove('active');
+                this.userToDelete = null;
+            }
+
+            deleteUser() {
+                if (this.userToDelete) {
+                    this.users = this.users.filter(u => u.id !== this.userToDelete);
+                    window.DashboardUtils.showNotification('User deleted successfully', 'success');
+                    this.closeDeleteModal();
+                    this.renderUsers();
+                }
+            }
+
+            initRevealAnimations() {
+                const revealElements = document.querySelectorAll('.reveal');
+                
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            entry.target.classList.add('active');
+                        }
+                    });
+                }, { threshold: 0.1 });
+                
+                revealElements.forEach(el => observer.observe(el));
+            }
+        }
+
+        // Initialize user manager
+        const userManager = new UserManager();
+    </script>
+</body>
+</html>
